@@ -1,0 +1,162 @@
+using System;
+using System.Diagnostics;
+
+class PuzzleGame
+{
+    public int[,] board;
+    public int emptyRow;
+    public int emptyCol;
+    public int movesCount;
+    public int size;
+
+    public PuzzleGame(int size)
+    {
+        this.size = size;
+        board = new int[size, size];
+        movesCount = 0;
+        InitializeBoard();
+        ShuffleBoard();
+    }
+
+    // Инициализация игрового поля
+    public void InitializeBoard()
+    {
+        int num = 1;
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < size; j++)
+            {
+                board[i, j] = (i == size - 1 && j == size - 1) ? 0 : num++;
+            }
+        }
+        emptyRow = size - 1;
+        emptyCol = size - 1;
+    }
+
+    // Перемешивание плиток
+    public void ShuffleBoard()
+    {
+        Random rand = new Random();
+        for (int i = 0; i < 1000; i++)
+        {
+            int direction = rand.Next(4);
+            switch (direction)
+            {
+                case 0: Move('W'); break; // Up
+                case 1: Move('A'); break; // Left
+                case 2: Move('S'); break; // Down
+                case 3: Move('D'); break; // Right
+            }
+        }
+    }
+
+    // Вывод игрового поля
+    public void PrintBoard()
+    {
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < size; j++)
+            {
+                if (board[i, j] == 0)
+                    Console.Write("_ ");
+                else
+                    Console.Write(board[i, j] + " ");
+            }
+            Console.WriteLine();
+        }
+    }
+
+    // Перемещение плитки
+    public bool Move(char direction)
+    {
+        int newRow = emptyRow;
+        int newCol = emptyCol;
+
+        switch (direction)
+        {
+            case 'W': newRow--; break; // Up
+            case 'A': newCol--; break; // Left
+            case 'S': newRow++; break; // Down
+            case 'D': newCol++; break; // Right
+            default: return false;
+        }
+
+        if (IsValidMove(newRow, newCol))
+        {
+            board[emptyRow, emptyCol] = board[newRow, newCol];
+            board[newRow, newCol] = 0;
+            emptyRow = newRow;
+            emptyCol = newCol;
+            movesCount++;
+            return true;
+        }
+        return false;
+    }
+
+    public bool IsValidMove(int row, int col)
+    {
+        return row >= 0 && row < size && col >= 0 && col < size;
+    }
+
+    // Проверка состояния победы
+    public bool CheckWin()
+    {
+        int num = 1;
+        for (int i = 0; i < size; i++)
+        {
+            for (int j = 0; j < size; j++)
+            {
+                if (i == size - 1 && j == size - 1) return board[i, j] == 0; // Пустое место
+                if (board[i, j] != num++) return false;
+            }
+        }
+        return true;
+    }
+
+    public int GetMovesCount() => movesCount;
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Console.WriteLine("Выберите размер поля (3, 4 или 5): ");
+        int size;
+        while (!int.TryParse(Console.ReadLine(), out size) || (size < 3 || size > 5))
+        {
+            Console.WriteLine("Некорректный ввод. Пожалуйста, выберите размер поля от 3 до 5.");
+        }
+
+        PuzzleGame game = new PuzzleGame(size);
+        Console.WriteLine("Добро пожаловать в игру 'Пятнашки'!");
+
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
+        while (true)
+        {
+            game.PrintBoard();
+            Console.WriteLine($"Ходов: {game.GetMovesCount()}");
+            Console.WriteLine("Введите команду для перемещения плитки (W - вверх, A - влево, S - вниз, D - вправо, Q - выход): ");
+            char command = Console.ReadKey().KeyChar;
+            Console.WriteLine();
+
+            if (command == 'Q')
+                break;
+
+            if (game.Move(command))
+            {
+                if (game.CheckWin())
+                {
+                    game.PrintBoard();
+                    stopwatch.Stop();
+                    Console.WriteLine($"Поздравляем! Вы решили головоломку за {game.GetMovesCount()} ходов и {stopwatch.Elapsed.TotalSeconds} секунд.");
+                    break;
+                }
+            }
+            else
+            {
+                Console.WriteLine("Неверный ход. Попробуйте снова.");
+            }
+        }
+    }
+}
